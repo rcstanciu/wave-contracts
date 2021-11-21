@@ -4,6 +4,7 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 const hre = require("hardhat");
+const { setTimeout } = require("timers/promises");
 
 async function main() {
   // Hardhat always runs the compile task when running scripts with its command
@@ -15,22 +16,20 @@ async function main() {
 
   // We get the contract to deploy
   const [owner] = await hre.ethers.getSigners();
-  const WavePortal = await hre.ethers.getContractFactory("WavePortal");
-  const wavePortal = await WavePortal.deploy();
-
-  await wavePortal.deployed();
+  const artifact = await hre.artifacts.readArtifact("WavePortal");
+  const wavePortal = await hre.ethers.getContractAt(
+    artifact.abi,
+    "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+  );
 
   console.log("WavePortal deployed to:", wavePortal.address);
   console.log("WavePortal contract owner:", owner.address);
 
-  let waveCount;
-  waveCount = await wavePortal.getTotalWaves();
-
-  let waveTxn;
-  waveTxn = await wavePortal.wave("Wave message");
-  await waveTxn.wait();
-
-  waveCount = await wavePortal.getTotalWaves();
+  for (let i = 0; i <= 100; i++) {
+    const waveTxn = await wavePortal.wave(`Wave #${i + 1}`);
+    await waveTxn.wait();
+    await setTimeout(2000);
+  }
 }
 
 // We recommend this pattern to be able to use async/await everywhere
